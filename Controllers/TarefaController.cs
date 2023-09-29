@@ -18,25 +18,38 @@ namespace TrilhaApiDesafio.Controllers
         [HttpGet("{id}")]
         public IActionResult ObterPorId(int id)
         {
-            // TODO: Buscar o Id no banco utilizando o EF
-            // TODO: Validar o tipo de retorno. Se não encontrar a tarefa, retornar NotFound,
-            // caso contrário retornar OK com a tarefa encontrada
-            return Ok();
+            // Verificar se existe um registro com o ID fornecido no banco de dados.
+            var tarefa = _context.Tarefas.FirstOrDefault(t => t.Id == id);
+            
+            // Se o registro não for encontrado, retornamos um NotFound.
+            if (tarefa == null)
+            {
+                return NotFound();
+            }
+
+             // Se encontrarmos o registro, retornamos um Ok com o objeto encontrado.
+            return Ok(tarefa);
+
         }
 
         [HttpGet("ObterTodos")]
         public IActionResult ObterTodos()
         {
-            // TODO: Buscar todas as tarefas no banco utilizando o EF
-            return Ok();
+            // Buscar todas as tarefas no banco utilizando EF
+            var tarefas = _context.Tarefas.ToList();
+
+            // Agora, vamos retornar um resultado Ok com a lista de tarefas encontradas
+            return Ok(tarefas);
         }
 
         [HttpGet("ObterPorTitulo")]
         public IActionResult ObterPorTitulo(string titulo)
         {
-            // TODO: Buscar  as tarefas no banco utilizando o EF, que contenha o titulo recebido por parâmetro
-            // Dica: Usar como exemplo o endpoint ObterPorData
-            return Ok();
+            // Filtrar tarefas cuja data seja igual a data fornecida
+            var tarefas = _context.Tarefas.Where(x => x.Titulo == titulo).ToList();
+
+            // Agora, vamos retornar um resultado Ok com as tarefas encontradas
+            return Ok(tarefas);
         }
 
         [HttpGet("ObterPorData")]
@@ -49,9 +62,8 @@ namespace TrilhaApiDesafio.Controllers
         [HttpGet("ObterPorStatus")]
         public IActionResult ObterPorStatus(EnumStatusTarefa status)
         {
-            // TODO: Buscar  as tarefas no banco utilizando o EF, que contenha o status recebido por parâmetro
-            // Dica: Usar como exemplo o endpoint ObterPorData
-            var tarefa = _context.Tarefas.Where(x => x.Status == status);
+            // Buscar as tarefas no banco utilizando o EF, que contenham o status recebido por parâmetro
+            var tarefa = _context.Tarefas.Where(x => x.Status == status).ToList();
             return Ok(tarefa);
         }
 
@@ -59,9 +71,17 @@ namespace TrilhaApiDesafio.Controllers
         public IActionResult Criar(Tarefa tarefa)
         {
             if (tarefa.Data == DateTime.MinValue)
-                return BadRequest(new { Erro = "A data da tarefa não pode ser vazia" });
+            {
+                return BadRequest(new { Erro = "A data da tarefa não pode ser vazia" });    
+            }
 
-            // TODO: Adicionar a tarefa recebida no EF e salvar as mudanças (save changes)
+
+            _context.Tarefas.Add(tarefa);
+            _context.SaveChanges();
+
+
+
+            // Agora, vamos retornar um resultado CreatedAtAction com o ID da tarefa criada
             return CreatedAtAction(nameof(ObterPorId), new { id = tarefa.Id }, tarefa);
         }
 
@@ -76,20 +96,32 @@ namespace TrilhaApiDesafio.Controllers
             if (tarefa.Data == DateTime.MinValue)
                 return BadRequest(new { Erro = "A data da tarefa não pode ser vazia" });
 
-            // TODO: Atualizar as informações da variável tarefaBanco com a tarefa recebida via parâmetro
-            // TODO: Atualizar a variável tarefaBanco no EF e salvar as mudanças (save changes)
+            // Atualizar as informações da variável tarefaBanco com a tarefa recebida via parâmetro
+             tarefaBanco.Descricao = tarefa.Descricao;
+             tarefaBanco.Titulo = tarefa.Titulo;
+             tarefaBanco.Status = tarefa.Status;
+             tarefaBanco.Data = tarefa.Data;
+
+             // Atualizar a variável tarefaBanco no EF e salvar as mudanças
+             _context.SaveChanges();
+
             return Ok();
         }
 
         [HttpDelete("{id}")]
         public IActionResult Deletar(int id)
         {
+            // Buscar a tarefa no banco pelo ID
             var tarefaBanco = _context.Tarefas.Find(id);
 
+            // Verificar se a tarefa existe
             if (tarefaBanco == null)
                 return NotFound();
 
-            // TODO: Remover a tarefa encontrada através do EF e salvar as mudanças (save changes)
+            // Remover a tarefa encontrada através do EF e salvar as mudanças
+            _context.Tarefas.Remove(tarefaBanco);
+            _context.SaveChanges();
+
             return NoContent();
         }
     }
